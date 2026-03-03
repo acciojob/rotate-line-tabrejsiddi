@@ -1,16 +1,213 @@
 <!DOCTYPE html>
-
-<html>
-
+<html lang="en">
 <head>
-	<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Nunito:wght@400;600;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #fff5f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      padding: 40px 30px;
+    }
+
+    h1 {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 2.6rem;
+      color: #222;
+      letter-spacing: 2px;
+    }
+
+    /* --- Setup Screen --- */
+    #setup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border: 2px solid #222;
+      border-radius: 16px;
+      padding: 30px 40px;
+      box-shadow: 6px 6px 0 #f4a;
+    }
+
+    #setup label { font-weight: 700; font-size: 1rem; color: #444; align-self: flex-start; }
+
+    #setup input[type="text"] {
+      width: 260px;
+      padding: 10px 14px;
+      border: 2px solid #222;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Nunito', sans-serif;
+      outline: none;
+      background: #fff5f7;
+      transition: border-color 0.2s;
+    }
+    #setup input[type="text"]:focus { border-color: #e05; }
+
+    #submit {
+      margin-top: 6px;
+      padding: 12px 36px;
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    #submit:hover { background: #e05; transform: translateY(-2px); }
+    #submit:active { transform: translateY(0); }
+
+    /* --- Game Screen --- */
+    #game { display: none; flex-direction: column; align-items: center; gap: 16px; }
+
+    .message {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #444;
+      min-height: 28px;
+    }
+
+    /* Board */
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      border: 2px solid #222;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .cell {
+      width: 110px;
+      height: 110px;
+      background: #f9b8c8;
+      border: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Permanent Marker', cursive;
+      font-size: 2.8rem;
+      color: #222;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .cell:hover:not(.taken) { background: #f5a0b8; }
+    .cell.taken { cursor: default; }
+    .cell.winner { background: #7b1fa2; color: #fff; }
+  </style>
 </head>
-
 <body>
-	<!-- the entire body must be written by student -->
-    <script type="text/javascript" src="./script.js">
-</script>
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
 
+    <!-- Setup -->
+    <div id="setup">
+      <label for="player-1">Player 1 Name (X)</label>
+      <input type="text" id="player-1" placeholder="Enter Player 1 name">
+      <label for="player-2">Player 2 Name (O)</label>
+      <input type="text" id="player-2" placeholder="Enter Player 2 name">
+      <button id="submit">Start Game</button>
+    </div>
+
+    <!-- Game -->
+    <div id="game">
+      <div class="message"></div>
+      <div id="board">
+        <div class="cell" id="1"></div>
+        <div class="cell" id="2"></div>
+        <div class="cell" id="3"></div>
+        <div class="cell" id="4"></div>
+        <div class="cell" id="5"></div>
+        <div class="cell" id="6"></div>
+        <div class="cell" id="7"></div>
+        <div class="cell" id="8"></div>
+        <div class="cell" id="9"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const submitBtn = document.getElementById('submit');
+    const setup     = document.getElementById('setup');
+    const game      = document.getElementById('game');
+    const message   = document.querySelector('.message');
+    const cells     = document.querySelectorAll('.cell');
+
+    const WINS = [
+      [1,2,3],[4,5,6],[7,8,9],
+      [1,4,7],[2,5,8],[3,6,9],
+      [1,5,9],[3,5,7]
+    ];
+
+    let players = ['',''];
+    let current = 0; // 0 = player1 (X), 1 = player2 (O)
+    let board   = {}; // id -> 'x' or 'o'
+    let over    = false;
+
+    submitBtn.addEventListener('click', () => {
+      const p1 = document.getElementById('player-1').value.trim();
+      const p2 = document.getElementById('player-2').value.trim();
+      if (!p1 || !p2) { alert('Please enter both player names.'); return; }
+      players = [p1, p2];
+      current = 0;
+      board   = {};
+      over    = false;
+      cells.forEach(c => { c.textContent = ''; c.classList.remove('taken','winner'); });
+      setup.style.display = 'none';
+      game.style.display  = 'flex';
+      message.textContent = `${players[0]}, you're up`;
+    });
+
+    cells.forEach(cell => {
+      cell.addEventListener('click', () => {
+        if (over || cell.classList.contains('taken')) return;
+        const id     = cell.id;
+        const mark   = current === 0 ? 'x' : 'o';
+        board[id]    = mark;
+        cell.textContent = mark;
+        cell.classList.add('taken');
+
+        const win = checkWin(mark);
+        if (win) {
+          win.forEach(i => document.getElementById(String(i)).classList.add('winner'));
+          message.textContent = `${players[current]}, congratulations you won!`;
+          over = true;
+        } else if (Object.keys(board).length === 9) {
+          message.textContent = "It's a draw!";
+          over = true;
+        } else {
+          current = current === 0 ? 1 : 0;
+          message.textContent = `${players[current]}, you're up`;
+        }
+      });
+    });
+
+    function checkWin(mark) {
+      for (const combo of WINS) {
+        if (combo.every(i => board[String(i)] === mark)) return combo;
+      }
+      return null;
+    }
+  </script>
 </body>
-
 </html>
